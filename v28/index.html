@@ -36,13 +36,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap" rel="stylesheet">
-
+  <script src="https://login-sdk.xsolla.com/latest/"></script>
   <script type="text/javascript" src ="js/libraries/unpkg.com_js-cookie@3.0.5_dist_js.cookie.min.js"></script>
   <!-- <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script> -->
   <script type="text/javascript" src="js/cookies_manager.js"></script>
   <script type="text/javascript" src="js/unity.js"></script>
   <script type="text/javascript" src="js/helpers.js"></script>
-
+  <script type="text/javascript" src="js/oauth_xsolla.js"></script>
   <script type="text/javascript" src="js/analytics_constants.js"></script>
   <script type="text/javascript" src="js/resizer.js"></script>
   <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
@@ -114,17 +114,14 @@
   <script type="text/javascript" src="js/amplitude.js"></script>
   <script type="text/javascript" src="js/analytics.js"></script>
   <script type="text/javascript" src="js/redirects.js"></script>
-  <script type="text/javascript" src="js/firebase.js"></script>
+
   <script type="text/javascript" src="js/discord.js"></script>
   <script type="text/javascript" src="js/animated_loader.js"></script>
   <script type="text/javascript" src="js/maintenance_break.js"></script>
   <!--<script type="text/javascript" src="js/input_handler.js"></script>-->
-  <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-auth-compat.js"></script>
+
   <script>
-  //#region Firebase
-  firebaseInit();
-  //#endregion Firebase
+
   </script>
   <script>
 	var num = Math.floor(Math.random() * 2); // 0...6
@@ -138,16 +135,7 @@
     var container = document.querySelector("#unity-container");
 	var mobile_error = document.querySelector("#no-phone-container");
 	
-	if (checkIfMobile()){
-		container.style.display = "none";
-		mobile_error.style.display = "flex";
-		sendEvent(HTML_No_Mobile_Version_Screen_Showed);
-	}
-	else{
-		if (!checkBrowser()){
-			sendEvent(HTML_Detect_Incorrect_Browser);
-		}
-	
+
 		mobile_error.remove();
 
 		
@@ -194,6 +182,9 @@
 
 		var myGameInstance = null;
 		ResizerInit();
+		
+		startLoadUnity();
+			
 
 		function startLoadUnity(){
 			destroyMaintenanceBreakUI();
@@ -237,7 +228,7 @@
 				}
 			});
 		}
-	}
+	
   </script>
 </body>
 
