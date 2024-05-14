@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>AI BOSS</title>
+	<style>
+		html,
+		body {
+			background: #000;
+			width: 100%;
+			height: 100%;
+			padding: 0;
+			margin: 0;
+            overflow: hidden;
+		}
+
+		div#gameContainer {
+			background: transparent !important;
+			position: absolute;
+            z-index: 0;
+		}
+        
+        #particleCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            background: url('bg.jpg') no-repeat center center fixed; 
+            background-size: cover; 
+            filter: blur(3px);
+        }
+
+        #loadingPercentage {
+            position: absolute;
+            top: 50%; /* Центр родительского контейнера по вертикали */
+            left: 50%; /* Центр родительского контейнера по горизонтали */
+            transform: translate(-50%, -100%); /* Смещение на 50% влево и 100% вверх от центра */
+            color: white;
+            font-size: 1.5em;
+            font-family: 'Roboto', sans-serif;
+            text-align: center; /* Текст выровнен по центру внутри элемента */
+            z-index: 3; /* Text above all */
+            white-space: pre-wrap; /* Обеспечивает перенос текста и корректное отображение переносов строк */
+            text-transform: uppercase; /* Convert text to uppercase */
+            background-color: #00000055; 
+            padding: 10px;
+            border-radius: 10px; /* Скругление углов */
+        }
+
+        #loadingBarBg {
+            position: absolute;
+            top: calc(50% + 40px); /* Расположение немного ниже текста */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%; /* Начальная ширина полоски загрузки */
+            height: 20px; /* Высота полоски */
+            background-color: #000000AA; /* Цвет полоски */
+            z-index: 3; /* Text above all */
+        }
+
+        #loadingBar {
+            position: absolute;
+            top: calc(50% + 40px); /* Расположение немного ниже текста */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50%; /* Начальная ширина полоски загрузки */
+            height: 20px; /* Высота полоски */
+            background-color: #4CAF50; /* Цвет полоски */
+            z-index: 4; /* Text above all */
+        }
+
+        #loadingPercentage, #loadingBar, #loadingBarBg, #particleCanvas {
+            transition: opacity 0.5s ease-in-out; /* Эффект плавного исчезновения на протяжении 2 секунд */
+            opacity: 1; /* Начальная видимость элементов */
+        }
+	</style>
+
+    <!-- MICROPHONE PRO START -->
+    <script src='./microphone.js'></script>
+    <!-- MICROPHONE PRO END -->
+</head>
+
+<body>
+    <canvas id="particleCanvas"></canvas>
+	<div id="gameContainer">
+		<canvas id="unity-canvas"></canvas>
+    </div>
+        <div id="loadingPercentage">Loading...</div>
+        <div id="loadingBarBg"></div>
+        <div id="loadingBar"></div>
+
+		<script src="Build/v45.loader.js"></script>
+		<script>
+			var canvas = document.querySelector("#unity-canvas");
+			var config = {
+				dataUrl: "Build/v45.data.unityweb",
+				frameworkUrl: "Build/v45.framework.js.unityweb",
+				codeUrl: "Build/v45.wasm.unityweb",
+				streamingAssetsUrl: "StreamingAssets",
+				companyName: "onlyspace",
+				productName: "AI BOSS",
+				productVersion: "45.groq",
+			};
+			var scaleToFit;
+			try {
+				scaleToFit = !!JSON.parse("false");
+			} catch (e) {
+				scaleToFit = true;
+			}
+
+            var loadingMessages = [
+                "Boss is powering up",
+                "Preparing to dominate",
+                "Boss is getting ready to challenge you",
+                "Calibrating evil plans",
+                "Boss is sharpening skills",
+                "Mastermind at work",
+                "Plotting world domination",
+                "Assembling minions",
+                "Boss is brewing a storm",
+                "Unlocking ultimate moves"
+            ];
+            var currentMessageIndex = 0;
+            function progressHandler(progress) {
+                var percent = Math.floor(progress * 100) + '%';
+                document.getElementById('loadingPercentage').innerHTML = loadingMessages[currentMessageIndex] + '<br>' + percent;
+                document.getElementById('loadingBar').style.width = percent;
+
+                if (progress >= 1) {
+                    clearInterval(messageUpdateInterval); // Остановка таймера обновления сообщений сразу
+
+
+                    // Полностью скрыть элементы после завершения анимации
+                    setTimeout(function() {
+                        document.getElementById('loadingPercentage').style.opacity = '0';
+                        document.getElementById('loadingBar').style.opacity = '0';
+                        document.getElementById('loadingBarBg').style.opacity = '0';
+                        document.getElementById('particleCanvas').style.opacity = '0';
+                        setTimeout(function() {
+                            document.getElementById('loadingPercentage').style.display = 'none';
+                            document.getElementById('loadingBar').style.display = 'none';
+                            document.getElementById('loadingBarBg').style.display = 'none';
+                            document.getElementById('particleCanvas').style.display = 'none';
+                        }, 500); // Задержка соответствует продолжительности transition
+                    }, 2500); // Задержка соответствует продолжительности transition
+
+                }
+            }
+            var messageUpdateInterval = setInterval(function() {
+                var canvasStyle = window.getComputedStyle(canvas);
+                var backgroundImage = canvasStyle.backgroundImage;
+                var matches = backgroundImage.match(/white \d+%/);
+                var percent = matches ? matches[0].split(' ')[1] : '0%'; // Извлекаем текущий процент из стиля фона
+
+                currentMessageIndex = (currentMessageIndex + 1) % loadingMessages.length;
+            }, 3500);
+
+			function onResize() {
+				var container = canvas.parentElement;
+                var w = window.innerWidth;
+                var h = window.innerHeight;
+				if (scaleToFit) {
+					var r = 1080 / 1920;
+
+					if (w * r > window.innerHeight) {
+						w = Math.min(w, Math.ceil(h / r));
+					}
+					h = Math.floor(w * r);
+				}
+
+				container.style.width = canvas.style.width = w + "px";
+				container.style.height = canvas.style.height = h + "px";
+				container.style.top = Math.floor((window.innerHeight - h) / 2) + "px";
+				container.style.left = Math.floor((window.innerWidth - w) / 2) + "px";
+			}
+			createUnityInstance(canvas, config, progressHandler).then(function (instance) {
+				canvas = instance.Module.canvas;
+				onResize();
+			});
+			window.addEventListener('resize', onResize);
+			onResize();
+
+
+            var particleCanvas = document.getElementById('particleCanvas');
+            var ctx = particleCanvas.getContext('2d');
+            particleCanvas.width = window.innerWidth;
+            particleCanvas.height = window.innerHeight;
+
+            var particles = [];
+            var particleCount = 100;
+
+            for (var i = 0; i < particleCount; i++) {
+                particles.push(new createParticle());
+            }
+
+            function createParticle() {
+                this.x = Math.random() * particleCanvas.width;
+                this.y = Math.random() * particleCanvas.height;
+                this.speed = 0.5 + Math.random() * 1.5;
+                this.radius = 2 + Math.random() * 3;
+                this.direction = Math.random() * 360;
+            }
+
+            function animateParticles() {
+                ctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fillRect(0, 0, particleCanvas.width, particleCanvas.height);
+                ctx.globalCompositeOperation = 'lighter';
+
+                particles.forEach(function(particle) {
+                    ctx.beginPath();
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.fillRect(particle.x, particle.y, particle.radius * 2, particle.radius * 2); // width and height are twice the radius to maintain proportion
+                    ctx.fill();
+                    ctx.closePath();
+
+                    // Update particle position
+                    particle.x += Math.cos(particle.direction) * particle.speed;
+                    particle.y += Math.sin(particle.direction) * particle.speed;
+
+                    // Reset particles that move out of bounds
+                    if (particle.x < 0 || particle.x > particleCanvas.width || particle.y < 0 || particle.y > particleCanvas.height) {
+                        particle.x = Math.random() * particleCanvas.width;
+                        particle.y = Math.random() * particleCanvas.height;
+                    }
+                });
+
+                requestAnimationFrame(animateParticles);
+            }
+
+            animateParticles(); // Start the animation
+
+            // Make sure to handle resizing of window
+            window.addEventListener('resize', function() {
+                particleCanvas.width = window.innerWidth;
+                particleCanvas.height = window.innerHeight;
+            });
+        </script>
+        </div>
+</body>
+
+</html>
