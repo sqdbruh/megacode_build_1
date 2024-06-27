@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+	<meta charset="utf-8">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<title>Craft-A-Boss</title>
+	<style>
+		html,
+		body {
+			background: #000;
+			width: 100%;
+			height: 100%;
+			padding: 0;
+			margin: 0;
+            overflow: hidden;
+		}
+
+		div#gameContainer {
+			background: transparent !important;
+			position: absolute;
+            z-index: 0;
+		}
+        
+        #particleCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            background: url('bg.jpg') no-repeat center center fixed; 
+            background-size: cover; 
+            filter: blur(4px);
+            transition: opacity 0.5s ease-in-out; /* Эффект плавного исчезновения на протяжении 2 секунд */
+        }
+
+        #loadingPercentage {
+            width: 80%;
+            font-weight: 700;
+            position: absolute;
+            top: 90%; /* Центр родительского контейнера по вертикали */
+            left: 50%; /* Центр родительского контейнера по горизонтали */
+            transform: translate(-50%, -100%); /* Смещение на 50% влево и 100% вверх от центра */
+            color: white;
+            font-size: 5.5em;
+            font-family: 'Inter', sans-serif;
+            text-align: center; /* Текст выровнен по центру внутри элемента */
+            z-index: 3; /* Text above all */
+            white-space: pre-wrap; /* Обеспечивает перенос текста и корректное отображение переносов строк */
+            text-transform: uppercase; /* Convert text to uppercase */
+            padding: 10px;
+            text-shadow: black 0 0 10px;
+        }
+
+        #loadingBarBg {
+            position: absolute;
+            top: calc(90% + 40px); /* Расположение немного ниже текста */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70%; /* Начальная ширина полоски загрузки */
+            height: 20px; /* Высота полоски */
+            background-color: #000000AA; /* Цвет полоски */
+            z-index: 3; /* Text above all */
+            border: 1px solid #FFFFFF80
+        }
+
+        #loadingBar {
+            position: absolute;
+            top: 0px; /* Верхний край внутри #loadingBarBg */
+            left: 0px; /* Левый край внутри #loadingBarBg */
+            width: 0%; /* Начальная ширина полоски загрузки */
+            height: 20px; /* Высота полоски */
+            background-color: #44ff00; /* Цвет полоски */
+            z-index: 4; /* Text above all */
+            transition: width 0.5s ease-out; /* Плавное увеличение ширины */
+        }
+
+        #centeredLogo {
+            position: absolute;
+            height: 50%;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 12; /* Higher than other elements */
+            opacity:0;
+            transition: opacity 0.5s ease-in-out; /* Эффект плавного исчезновения на протяжении 2 секунд */
+        }
+
+        #loadingPercentage, #loadingBar, #loadingBarBg {
+            transition: opacity 0.5s ease-in-out; /* Эффект плавного исчезновения на протяжении 2 секунд */
+            opacity: 0; /* Начальная видимость элементов */
+        }
+
+        .logo {
+            opacity: 0;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30%; /* Примерная ширина, можно изменить */
+            height: auto;
+            transition: opacity 0.5s ease-in-out;
+            z-index:12;
+
+        }
+        #logo1 {
+            right: 55%; /* Расположение справа */
+        }
+        #logo2 {
+            left: 55%; /* Расположение слева */
+        }
+
+        #fullscreenBlackBg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            z-index: 11; /* Убедитесь, что фон находится под логотипами */
+            opacity: 1; /* Начальная невидимость */
+            transition: opacity 0.5s ease-in-out; /* Плавное изменение прозрачности */
+        }
+
+	</style>
+
+    <!-- MICROPHONE PRO START -->
+    <script src='./microphone.js'></script>
+    <!-- MICROPHONE PRO END -->
+</head>
+
+<body>
+    <div id="fullscreenBlackBg" style="display:none;"></div>
+    <img id="logo1" class="logo" src="logo1.png" alt="Logo 1">
+    <img id="logo2" class="logo" src="logo2.png" alt="Logo 2">
+    <img id="centeredLogo" src="logo.png" alt="Company Logo">
+    <canvas id="particleCanvas"></canvas>
+    <div id="gameContainer">
+        <canvas id="unity-canvas"></canvas>
+    </div>
+    <div id="loadingPercentage">Loading...</div>
+    <div id="loadingBarBg">
+        <div id="loadingBar"></div>
+    </div>
+    <script src="LOADER_FILE_URL"></script>
+		<script>
+            var hideLoading = false;
+
+            document.addEventListener('DOMContentLoaded', function () {
+                const logo1 = document.getElementById('logo1');
+                const logo2 = document.getElementById('logo2');
+                const centeredLogo = document.getElementById('centeredLogo');
+                const fullscreenBlackBg = document.getElementById('fullscreenBlackBg');
+
+                // Показываем черный фон
+                fullscreenBlackBg.style.display = 'block';
+
+                logo1.style.opacity = 1;
+                logo2.style.opacity = 1;
+
+                // Исчезновение первых двух логотипов и появление центрального
+                setTimeout(() => {
+                    logo1.style.opacity = 0;
+                    logo2.style.opacity = 0;
+
+                    setTimeout(() => {
+                        centeredLogo.style.opacity = 1;
+                        fullscreenBlackBg.style.opacity = 0;
+
+                        // Исчезновение центрального логотипа
+                        setTimeout(() => {
+                            centeredLogo.style.opacity = 0;
+                            fullscreenBlackBg.style.display = 'none'; // Скрываем черный фон
+                            if(!hideLoading){
+                                document.getElementById('loadingPercentage').style.opacity = 1;
+                                document.getElementById('loadingBar').style.opacity = 1;
+                                document.getElementById('loadingBarBg').style.opacity = 1;
+                                document.getElementById('particleCanvas').style.opacity = 1;
+                            }
+                        }, 2000);
+                    }, 500);
+                }, 3000);
+            });
+
+
+			var canvas = document.querySelector("#unity-canvas");
+            var config = {
+                dataUrl: "DATA_FILE_URL",
+                frameworkUrl: "FRAMEWORK_FILE_URL",
+                codeUrl: "WASM_FILE_URL",
+                companyName: "onlyspace",
+                productName: "Craft-A-Boss",
+                productVersion: "51",
+            };
+        var scaleToFit;
+        try {
+            scaleToFit = !!JSON.parse("false");
+        } catch (e) {
+            scaleToFit = true;
+        }
+
+        var loadingMessages = [
+            "Loading   ",
+            "Loading.  ",
+            "Loading.. ",
+            "Loading...",
+        ];
+        var currentMessageIndex = 0;
+        function progressHandler(progress) {
+            var percent = Math.floor(progress * 100) + '%';
+            document.getElementById('loadingPercentage').innerHTML = loadingMessages[currentMessageIndex];
+            document.getElementById('loadingBar').style.width = percent;
+                if (progress >= 1) {
+                    clearInterval(messageUpdateInterval); // Остановка таймера обновления сообщений сразу
+
+                    setTimeout(function() {
+                        hideLoading = true;
+                        document.getElementById('loadingPercentage').style.opacity = '0';
+                        document.getElementById('loadingBar').style.opacity = '0';
+                        document.getElementById('loadingBarBg').style.opacity = '0';
+                        document.getElementById('particleCanvas').style.opacity = '0';
+                        document.getElementById('centeredLogo').style.opacity = '0';
+                        setTimeout(function() {
+                            var loadingPercentage = document.getElementById('loadingPercentage');
+                            if (loadingPercentage) loadingPercentage.remove();
+
+                            var loadingBar = document.getElementById('loadingBar');
+                            if (loadingBar) loadingBar.remove();
+
+                            var loadingBarBg = document.getElementById('loadingBarBg');
+                            if (loadingBarBg) loadingBarBg.remove();
+
+                            var particleCanvas = document.getElementById('particleCanvas');
+                            if (particleCanvas) particleCanvas.remove();
+
+                            var logo = document.getElementById('centeredLogo');
+                            if (logo) logo.remove();
+
+                            var bg = document.getElementById('fullscreenBlackBg');
+                            if (bg) bg.remove();
+
+                            var logo1 = document.getElementById('logo1');
+                            if (logo1) logo1.remove();
+
+                            var logo2 = document.getElementById('logo2');
+                            if (logo2) logo2.remove();
+                        }, 500); // Задержка соответствует продолжительности transition
+                    }, 2500); // Задержка соответствует продолжительности transition
+
+                }
+            }
+            var messageUpdateInterval = setInterval(function() {
+                var canvasStyle = window.getComputedStyle(canvas);
+                var backgroundImage = canvasStyle.backgroundImage;
+                var matches = backgroundImage.match(/white \d+%/);
+                var percent = matches ? matches[0].split(' ')[1] : '0%'; // Извлекаем текущий процент из стиля фона
+
+                currentMessageIndex = (currentMessageIndex + 1) % loadingMessages.length;
+            }, 500);
+
+			function onResize() {
+				var container = canvas.parentElement;
+                var w = window.innerWidth;
+                var h = window.innerHeight;
+				if (scaleToFit) {
+					var r = 1080 / 1920;
+
+					if (w * r > window.innerHeight) {
+						w = Math.min(w, Math.ceil(h / r));
+					}
+					h = Math.floor(w * r);
+				}
+
+				container.style.width = canvas.style.width = w + "px";
+				container.style.height = canvas.style.height = h + "px";
+				container.style.top = Math.floor((window.innerHeight - h) / 2) + "px";
+				container.style.left = Math.floor((window.innerWidth - w) / 2) + "px";
+			}
+			createUnityInstance(canvas, config, progressHandler).then(function (instance) {
+				canvas = instance.Module.canvas;
+				onResize();
+			});
+			window.addEventListener('resize', onResize);
+			onResize();
+
+
+            var particleCanvas = document.getElementById('particleCanvas');
+            var ctx = particleCanvas.getContext('2d');
+            particleCanvas.width = window.innerWidth;
+            particleCanvas.height = window.innerHeight;
+
+            var particles = [];
+            var particleCount = 100;
+
+            for (var i = 0; i < particleCount; i++) {
+                <!-- particles.push(new createParticle()); -->
+            }
+
+            function createParticle() {
+                this.x = Math.random() * particleCanvas.width;
+                this.y = Math.random() * particleCanvas.height;
+                this.speed = 0.5 + Math.random() * 1.5;
+                this.radius = 2 + Math.random() * 3;
+                this.direction = Math.random() * 360;
+            }
+
+            function animateParticles() {
+                ctx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+                ctx.globalCompositeOperation = 'source-over';
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fillRect(0, 0, particleCanvas.width, particleCanvas.height);
+                ctx.globalCompositeOperation = 'lighter';
+
+                particles.forEach(function(particle) {
+                    ctx.beginPath();
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.fillRect(particle.x, particle.y, particle.radius * 2, particle.radius * 2); // width and height are twice the radius to maintain proportion
+                    ctx.fill();
+                    ctx.closePath();
+
+                    // Update particle position
+                    particle.x += Math.cos(particle.direction) * particle.speed;
+                    particle.y += Math.sin(particle.direction) * particle.speed;
+
+                    // Reset particles that move out of bounds
+                    if (particle.x < 0 || particle.x > particleCanvas.width || particle.y < 0 || particle.y > particleCanvas.height) {
+                        particle.x = Math.random() * particleCanvas.width;
+                        particle.y = Math.random() * particleCanvas.height;
+                    }
+                });
+
+                requestAnimationFrame(animateParticles);
+            }
+
+            animateParticles(); // Start the animation
+
+            // Make sure to handle resizing of window
+            window.addEventListener('resize', function() {
+                particleCanvas.width = window.innerWidth;
+                particleCanvas.height = window.innerHeight;
+            });
+        </script>
+        </div>
+</body>
+
+</html>
